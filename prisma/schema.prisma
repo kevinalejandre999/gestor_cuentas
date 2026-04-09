@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  lastName      String
+  phone         String?
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  wallets       WalletMember[]
+  transactions  Transaction[]
+  ownedWallets  Wallet[]    @relation("WalletOwner")
+}
+
+model Wallet {
+  id            String    @id @default(cuid())
+  name          String
+  currency      String    @default("USD")
+  balance       Decimal   @default(0)
+  ownerId       String
+
+  owner         User      @relation("WalletOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members       WalletMember[]
+  transactions  Transaction[]
+  createdAt     DateTime  @default(now())
+}
+
+model WalletMember {
+  id          String   @id @default(cuid())
+  userId      String
+  walletId    String
+  role        String   @default("member")
+  joinedAt    DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, walletId])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  type        String
+  amount      Decimal
+  description String?
+  category    String?
+  date        DateTime @default(now())
+  walletId    String
+  userId      String
+
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

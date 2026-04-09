@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gestor_cuentas_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gestor_user
+      POSTGRES_PASSWORD: gestor_password
+      POSTGRES_DB: gestor_cuentas
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestor_user -d gestor_cuentas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
