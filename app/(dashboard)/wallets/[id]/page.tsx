@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useWalletStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import QuickTransactionForm from "@/components/quick-transaction-form";
+import TransactionForm from "@/components/transaction-form";
 import {
   LineChart,
   Line,
@@ -68,6 +68,8 @@ export default function WalletPage({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [period, setPeriod] = useState<Period>("this-month");
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     setLastWalletId(params.id);
@@ -278,8 +280,8 @@ export default function WalletPage({
                     key={t.id}
                     className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
                   >
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium">
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
                         {t.description || t.category || "Sin descripción"}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -287,21 +289,65 @@ export default function WalletPage({
                         {t.user.name} {t.user.lastName}
                       </p>
                     </div>
-                    <p
-                      className={`text-sm font-semibold ${
-                        t.type === "INCOME" ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {t.type === "INCOME" ? "+" : "-"}
-                      {formatCurrency(parseFloat(t.amount), wallet.currency)}
-                    </p>
+                    <div className="flex items-center gap-3 ml-2">
+                      <p
+                        className={`text-sm font-semibold ${
+                          t.type === "INCOME" ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {t.type === "INCOME" ? "+" : "-"}
+                        {formatCurrency(parseFloat(t.amount), wallet.currency)}
+                      </p>
+                      <button
+                        onClick={() => {
+                          setEditingTransaction(t);
+                          setShowForm(true);
+                        }}
+                        className="text-xs text-muted-foreground hover:text-primary underline"
+                      >
+                        Editar
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </CardContent>
           </Card>
 
-          <QuickTransactionForm walletId={wallet.id} onSuccess={loadData} />
+          <button
+            onClick={() => {
+              setEditingTransaction(null);
+              setShowForm(true);
+            }}
+            className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            aria-label="Añadir transacción"
+          >
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </button>
+
+          {showForm && (
+            <TransactionForm
+              walletId={wallet.id}
+              transaction={editingTransaction}
+              onClose={() => {
+                setShowForm(false);
+                setEditingTransaction(null);
+              }}
+              onSuccess={loadData}
+            />
+          )}
         </>
       )}
     </div>
