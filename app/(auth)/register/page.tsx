@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,13 +55,16 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         setError(data.error || "Error al registrar");
+        toast.error(data.error || "Error al registrar");
         setLoading(false);
         return;
       }
 
+      toast.success("Cuenta creada correctamente");
       router.push("/login");
     } catch {
       setError("Error de conexión");
+      toast.error("Error de conexión");
       setLoading(false);
     }
   }

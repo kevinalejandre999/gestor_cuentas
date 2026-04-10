@@ -1,6 +1,7 @@
 import Link from "next/link";
 import WalletSelector from "@/components/wallet-selector";
 import LogoutButton from "@/components/logout-button";
+import BottomNav from "@/components/bottom-nav";
 
 export default function DashboardLayout({
   children,
@@ -20,7 +21,8 @@ export default function DashboardLayout({
           </div>
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-16 sm:pb-0">{children}</main>
+      <BottomNav />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 const expenseCategories = [
   "Comida",
@@ -89,9 +90,11 @@ export default function TransactionForm({
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setError(data.error || "Error al guardar");
+      toast.error(data.error || "Error al guardar");
       return;
     }
 
+    toast.success(isEdit ? "Transacción actualizada" : "Transacción creada");
     onSuccess();
     onClose();
   }
@@ -109,9 +112,11 @@ export default function TransactionForm({
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setError(data.error || "Error al eliminar");
+      toast.error(data.error || "Error al eliminar");
       return;
     }
 
+    toast.success("Transacción eliminada");
     onSuccess();
     onClose();
   }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,8 +36,11 @@ export default function LoginForm() {
 
     if (result?.error) {
       setError("Email o contraseña incorrectos");
+      toast.error("Email o contraseña incorrectos");
       return;
     }
+
+    toast.success("Sesión iniciada correctamente");
 
     const searchParamsCallback = searchParams.get("callbackUrl");
     let redirectTo = callbackUrl;
