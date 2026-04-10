@@ -38,7 +38,24 @@ export default function LoginForm() {
       return;
     }
 
-    router.push(callbackUrl);
+    const searchParamsCallback = searchParams.get("callbackUrl");
+    let redirectTo = callbackUrl;
+
+    if (!searchParamsCallback) {
+      try {
+        const raw = localStorage.getItem("gestor-cuentas-wallet");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.state?.lastWalletId) {
+            redirectTo = `/wallets/${parsed.state.lastWalletId}`;
+          }
+        }
+      } catch {
+        // ignorar errores de localStorage
+      }
+    }
+
+    router.push(redirectTo);
     router.refresh();
   }
 
