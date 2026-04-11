@@ -2,6 +2,7 @@ import Link from "next/link";
 import WalletSelector from "@/components/wallet-selector";
 import LogoutButton from "@/components/logout-button";
 import BottomNav from "@/components/bottom-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default function DashboardLayout({
           </Link>
           <div className="flex items-center gap-3">
             <WalletSelector />
+            <ThemeToggle />
             <LogoutButton />
           </div>
         </div>

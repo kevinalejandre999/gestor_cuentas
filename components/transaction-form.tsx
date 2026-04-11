@@ -7,31 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
-const expenseCategories = [
-  "Alimentacion",
-  "Transporte", 
-  "Hogar",
-  "Salud",
-  "Entretenimiento",
-  "Trabajo",
-  "Educacion",
-  "Ropa",
-  "Servicios",
-  "Mascotas",
-  "Regalos",
-  "Ahorro",
-  "Otros",
-];
-
-const incomeCategories = [
-  "Sueldo",
-  "Freelance",
-  "Inversiones",
-  "Regalo",
-  "Reembolso",
-  "Venta",
-  "Otros",
-];
+interface Category {
+  id: string;
+  name: string;
+  type: "INCOME" | "EXPENSE";
+  color: string | null;
+}
 
 interface Transaction {
   id: string;
@@ -50,6 +31,15 @@ interface TransactionFormProps {
   onSuccess: () => void;
 }
 
+// Categorias por defecto si el usuario no tiene ninguna
+const defaultExpenseCategories = [
+  "Alimentacion", "Transporte", "Hogar", "Salud", 
+  "Entretenimiento", "Trabajo", "Otros"
+];
+const defaultIncomeCategories = [
+  "Sueldo", "Freelance", "Inversiones", "Otros"
+];
+
 export default function TransactionForm({
   walletId,
   transaction,
@@ -65,6 +55,27 @@ export default function TransactionForm({
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Cargar categorias del usuario
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const res = await fetch(`/api/categories?type=${type}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error("Error loading categories:", err);
+      } finally {
+        setLoadingCategories(false);
+      }
+    }
+    loadCategories();
+  }, [type]);
 
   useEffect(() => {
     if (transaction) {
@@ -78,14 +89,15 @@ export default function TransactionForm({
   }, [transaction]);
 
   useEffect(() => {
-    if (!isEdit) {
-      if (type === "INCOME") {
-        setCategory("Sueldo");
-      } else {
-        setCategory("Alimentacion");
-      }
+    if (!isEdit && categories.length > 0) {
+      setCategory(categories[0].name);
     }
-  }, [type, isEdit]);
+  }, [categories, isEdit]);
+
+  // Obtener lista de categorias a mostrar
+  const availableCategories = categories.length > 0 
+    ? categories.map(c => c.name)
+    : (type === "INCOME" ? defaultIncomeCategories : defaultExpenseCategories);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -149,8 +161,6 @@ export default function TransactionForm({
     onClose();
   }
 
-  const categories = type === "INCOME" ? incomeCategories : expenseCategories;
-
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
       <Card className="w-full max-w-sm">
@@ -186,6 +196,7 @@ export default function TransactionForm({
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ej: Compra supermercado"
               />
             </div>
             <div className="space-y-2">
@@ -197,17 +208,25 @@ export default function TransactionForm({
                 required
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tf-category">Categoria</Label>
+              <Label htmlFor="tf-category">
+                Categoria
+                {categories.length === 0 && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    (Puedes crear categorias personalizadas en Configuracion)
+                  </span>
+                )}
+              </Label>
               <select
                 id="tf-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                {categories.map((c) => (
+                {availableCategories.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
@@ -215,11 +234,12 @@ export default function TransactionForm({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tf-desc">Descripcion</Label>
+              <Label htmlFor="tf-desc">Descripcion (opcional)</Label>
               <Input
                 id="tf-desc"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                placeholder="Detalles adicionales..."
               />
             </div>
             <div className="space-y-2">

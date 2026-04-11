@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "GestorCuentas",
-  description: "Gestión de cuentas y carteras compartidas",
+  description: "Gestion de cuentas y carteras compartidas",
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="h-full antialiased">
+    <html lang="es" className="h-full antialiased" suppressHydrationWarning>
       <body className={`${inter.className} min-h-full flex flex-col`}>
         <Providers>{children}</Providers>
       </body>

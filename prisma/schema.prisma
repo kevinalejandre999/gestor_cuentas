@@ -20,6 +20,7 @@ model User {
   wallets       WalletMember[]
   transactions  Transaction[]
   recurring     RecurringTransaction[]
+  categories    Category[]
   ownedWallets  Wallet[]    @relation("WalletOwner")
 }
 
@@ -48,6 +49,19 @@ model WalletMember {
   wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@unique([userId, walletId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // INCOME or EXPENSE
+  color       String?  // Color hex opcional
+  userId      String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name, type, userId])
 }
 
 model Transaction {

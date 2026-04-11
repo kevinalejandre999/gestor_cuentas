@@ -21,8 +21,15 @@ interface Recurring {
   user: { name: string; lastName: string };
 }
 
-const expenseCategories = ["Comida", "Transporte", "Hogar", "Salud", "Entretenimiento", "Trabajo", "Otros"];
-const incomeCategories = ["Sueldo", "Freelance", "Inversiones", "Otros"];
+interface Category {
+  id: string;
+  name: string;
+  type: "INCOME" | "EXPENSE";
+}
+
+// Categorias por defecto
+const defaultExpenseCategories = ["Alimentacion", "Transporte", "Hogar", "Salud", "Entretenimiento", "Trabajo", "Otros"];
+const defaultIncomeCategories = ["Sueldo", "Freelance", "Inversiones", "Otros"];
 
 export default function RecurringPage() {
   const params = useParams();
@@ -39,6 +46,8 @@ export default function RecurringPage() {
   const [description, setDescription] = useState("");
   const [dayOfMonth, setDayOfMonth] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const fetchRecurring = async () => {
     try {
@@ -54,17 +63,32 @@ export default function RecurringPage() {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const res = await fetch(`/api/categories?type=${type}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error("Error loading categories:", err);
+    }
+  };
+
   useEffect(() => {
     if (walletId) fetchRecurring();
   }, [walletId]);
 
   useEffect(() => {
-    if (type === "INCOME") {
-      setCategory("Sueldo");
-    } else {
-      setCategory("Comida");
-    }
+    loadCategories();
   }, [type]);
+
+  useEffect(() => {
+    const availableCats = categories.length > 0 
+      ? categories.map(c => c.name)
+      : (type === "INCOME" ? defaultIncomeCategories : defaultExpenseCategories);
+    setCategory(availableCats[0] || "");
+  }, [type, categories]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Eliminar esta cuota fija?")) return;
@@ -123,7 +147,9 @@ export default function RecurringPage() {
     return new Intl.NumberFormat("es-ES").format(parseFloat(value));
   };
 
-  const categories = type === "INCOME" ? incomeCategories : expenseCategories;
+  const availableCategories = categories.length > 0 
+    ? categories.map(c => c.name)
+    : (type === "INCOME" ? defaultIncomeCategories : defaultExpenseCategories);
 
   return (
     <div className="p-4 pb-24">
@@ -223,14 +249,21 @@ export default function RecurringPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Categoria</Label>
+                  <Label htmlFor="category">
+                    Categoria
+                    {categories.length === 0 && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (Crea categorias en Configuracion)
+                      </span>
+                    )}
+                  </Label>
                   <select
                     id="category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
-                    {categories.map((cat) => (
+                    {availableCategories.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>
