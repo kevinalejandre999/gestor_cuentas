@@ -90,7 +90,7 @@ export default function WalletReportsPage() {
   
   const currency = wallet?.currency || "PYG";
 
-  const { from, to } = useMemo(() => getPeriodFilter(period), [period]);
+  const { from, to } = useMemo(() => getPeriodDates(period), [period]);
 
   const filteredTransactions = useMemo(() => {
     return transactions
