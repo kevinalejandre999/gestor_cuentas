@@ -5,7 +5,7 @@ import { useWalletStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TransactionForm from "@/components/transaction-form";
 import WalletMembersModal from "@/components/wallet-members-modal";
-import { Users, TrendingUp, TrendingDown, Plus } from "lucide-react";
+import { Users, TrendingUp, TrendingDown, Plus, List, Repeat, PieChart, Tag } from "lucide-react";
 import Link from "next/link";
 import {
   LineChart,
@@ -241,6 +241,49 @@ export default function WalletPage({
               </CardContent>
             </Card>
           </div>
+
+          {/* Accesos rapidos */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Accesos rapidos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-2">
+                <Link href={`/wallets/${wallet.id}/transactions`}>
+                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <List className="h-5 w-5 text-primary" />
+                    </div>
+                    <span className="text-xs text-center">Movimientos</span>
+                  </div>
+                </Link>
+                <Link href={`/wallets/${wallet.id}/recurring`}>
+                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <Repeat className="h-5 w-5 text-primary" />
+                    </div>
+                    <span className="text-xs text-center">Fijos</span>
+                  </div>
+                </Link>
+                <Link href={`/wallets/${wallet.id}/reports`}>
+                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <PieChart className="h-5 w-5 text-primary" />
+                    </div>
+                    <span className="text-xs text-center">Informes</span>
+                  </div>
+                </Link>
+                <Link href="/settings">
+                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <Tag className="h-5 w-5 text-primary" />
+                    </div>
+                    <span className="text-xs text-center">Categorias</span>
+                  </div>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
