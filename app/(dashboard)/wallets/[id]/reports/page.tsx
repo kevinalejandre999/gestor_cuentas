@@ -19,6 +19,7 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { formatCurrency } from "@/lib/currency";
 
 const COLORS = [
   "hsl(var(--primary))",
@@ -43,11 +44,10 @@ interface Transaction {
   user: { name: string; lastName: string };
 }
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
+interface WalletData {
+  id: string;
+  name: string;
+  currency: string;
 }
 
 function getMonthLabel(date: Date) {
@@ -75,25 +75,37 @@ function getPeriodFilter(period: Period) {
 export default function WalletReportsPage() {
   const { id } = useParams<{ id: string }>();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [wallet, setWallet] = useState<WalletData | null>(null);
   const [period, setPeriod] = useState<Period>("this-month");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadTransactions() {
+    async function loadData() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/transactions?walletId=${id}`);
-        if (!res.ok) throw new Error("Error al cargar");
-        const data = await res.json();
-        setTransactions(data);
+        const [txRes, walletRes] = await Promise.all([
+          fetch(`/api/transactions?walletId=${id}`),
+          fetch(`/api/wallets/${id}`),
+        ]);
+        
+        if (!txRes.ok) throw new Error("Error al cargar transacciones");
+        const txData = await txRes.json();
+        setTransactions(txData);
+        
+        if (walletRes.ok) {
+          const walletData = await walletRes.json();
+          setWallet(walletData);
+        }
       } catch (err) {
-        toast.error("Error al cargar transacciones");
+        toast.error("Error al cargar datos");
       } finally {
         setLoading(false);
       }
     }
-    loadTransactions();
+    loadData();
   }, [id]);
+  
+  const currency = wallet?.currency || "PYG";
 
   const { from, to } = useMemo(() => getPeriodFilter(period), [period]);
 
@@ -200,7 +212,7 @@ export default function WalletReportsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-green-600">
-                  +{formatCurrency(totalIncome)}
+                  +{formatCurrency(totalIncome, currency)}
                 </p>
               </CardContent>
             </Card>
@@ -214,7 +226,7 @@ export default function WalletReportsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-red-600">
-                  -{formatCurrency(totalExpense)}
+                  -{formatCurrency(totalExpense, currency)}
                 </p>
               </CardContent>
             </Card>
@@ -229,7 +241,7 @@ export default function WalletReportsPage() {
               <CardContent>
                 <p className={`text-2xl font-bold ${balance >= 0 ? "text-green-600" : "text-red-600"}`}>
                   {balance >= 0 ? "+" : ""}
-                  {formatCurrency(balance)}
+                  {formatCurrency(balance, currency)}
                 </p>
               </CardContent>
             </Card>
@@ -263,7 +275,7 @@ export default function WalletReportsPage() {
                             />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                        <Tooltip formatter={(value: number) => formatCurrency(value, currency)} />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
@@ -291,7 +303,7 @@ export default function WalletReportsPage() {
                           new Intl.NumberFormat("es-ES", { notation: "compact" }).format(v)
                         }
                       />
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip formatter={(value: number) => formatCurrency(value, currency)} />
                       <Legend />
                       <Bar dataKey="income" name="Ingresos" fill="#22c55e" />
                       <Bar dataKey="expense" name="Gastos" fill="#ef4444" />
@@ -325,7 +337,7 @@ export default function WalletReportsPage() {
                       </div>
                       <p className={`text-sm font-semibold ${t.type === "INCOME" ? "text-green-600" : "text-red-600"}`}>
                         {t.type === "INCOME" ? "+" : "-"}
-                        {formatCurrency(parseFloat(t.amount))}
+                        {formatCurrency(parseFloat(t.amount), currency)}
                       </p>
                     </div>
                   ))}

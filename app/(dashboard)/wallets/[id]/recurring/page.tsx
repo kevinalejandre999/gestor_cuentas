@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency, formatNumberInput } from "@/lib/currency";
 
 interface Recurring {
   id: string;
@@ -27,6 +28,12 @@ interface Category {
   type: "INCOME" | "EXPENSE";
 }
 
+interface WalletData {
+  id: string;
+  name: string;
+  currency: string;
+}
+
 // Categorias por defecto
 const defaultExpenseCategories = ["Alimentacion", "Transporte", "Hogar", "Salud", "Entretenimiento", "Trabajo", "Otros"];
 const defaultIncomeCategories = ["Sueldo", "Freelance", "Inversiones", "Otros"];
@@ -36,26 +43,39 @@ export default function RecurringPage() {
   const walletId = params.id as string;
 
   const [items, setItems] = useState<Recurring[]>([]);
+  const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
+  const [displayAmount, setDisplayAmount] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [dayOfMonth, setDayOfMonth] = useState("");
   const [submitting, setSubmitting] = useState(false);
   
   const [categories, setCategories] = useState<Category[]>([]);
+  
+  const currency = wallet?.currency || "PYG";
 
   const fetchRecurring = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/recurring?walletId=${walletId}`);
-      if (!res.ok) throw new Error("Error al cargar");
-      const data = await res.json();
+      const [recurringRes, walletRes] = await Promise.all([
+        fetch(`/api/recurring?walletId=${walletId}`),
+        fetch(`/api/wallets/${walletId}`),
+      ]);
+      
+      if (!recurringRes.ok) throw new Error("Error al cargar");
+      const data = await recurringRes.json();
       setItems(data);
+      
+      if (walletRes.ok) {
+        const walletData = await walletRes.json();
+        setWallet(walletData);
+      }
     } catch (err) {
       toast.error("Error al cargar cuotas fijas");
     } finally {
@@ -89,6 +109,19 @@ export default function RecurringPage() {
       : (type === "INCOME" ? defaultIncomeCategories : defaultExpenseCategories);
     setCategory(availableCats[0] || "");
   }, [type, categories]);
+  
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const numericValue = value.replace(/[^0-9]/g, "");
+    
+    if (numericValue) {
+      setAmount(numericValue);
+      setDisplayAmount(formatNumberInput(numericValue, currency));
+    } else {
+      setAmount("");
+      setDisplayAmount("");
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Eliminar esta cuota fija?")) return;
@@ -133,6 +166,7 @@ export default function RecurringPage() {
       setShowModal(false);
       setTitle("");
       setAmount("");
+      setDisplayAmount("");
       setDescription("");
       setDayOfMonth("");
       fetchRecurring();
@@ -143,8 +177,8 @@ export default function RecurringPage() {
     }
   };
 
-  const formatAmount = (value: string) => {
-    return new Intl.NumberFormat("es-ES").format(parseFloat(value));
+  const formatAmountDisplay = (value: string) => {
+    return formatCurrency(parseFloat(value), currency);
   };
 
   const availableCategories = categories.length > 0 
@@ -172,7 +206,7 @@ export default function RecurringPage() {
                     ) : (
                       <span className="text-red-600 font-medium">Gasto</span>
                     )}{" "}
-                    {formatAmount(item.amount)} - Dia {item.dayOfMonth}
+                    {formatAmountDisplay(item.amount)} - Dia {item.dayOfMonth}
                   </p>
                 </div>
                 <Button
@@ -248,12 +282,19 @@ export default function RecurringPage() {
                   <Label htmlFor="amount">Monto</Label>
                   <Input
                     id="amount"
-                    type="number"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    type="text"
+                    inputMode="numeric"
+                    value={displayAmount}
+                    onChange={handleAmountChange}
+                    placeholder="0"
+                    className="font-mono text-lg"
                     required
                   />
+                  {amount && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      = {formatCurrency(Number(amount), currency)}
+                    </p>
+                  )}
                 </div>
 
                 <div>

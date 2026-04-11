@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import TransactionForm from "@/components/transaction-form";
+import { formatCurrency } from "@/lib/currency";
 
 interface Transaction {
   id: string;
@@ -27,9 +28,16 @@ interface Transaction {
   user: { name: string; lastName: string };
 }
 
+interface Wallet {
+  id: string;
+  name: string;
+  currency: string;
+}
+
 export default function TransactionsPage() {
   const { id } = useParams<{ id: string }>();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -40,22 +48,31 @@ export default function TransactionsPage() {
   const [sortBy, setSortBy] = useState<"date" | "amount">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  async function loadTransactions() {
+  async function loadData() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/transactions?walletId=${id}`);
-      if (!res.ok) throw new Error("Error al cargar transacciones");
-      const data = await res.json();
-      setTransactions(data);
+      const [txRes, walletRes] = await Promise.all([
+        fetch(`/api/transactions?walletId=${id}`),
+        fetch(`/api/wallets/${id}`),
+      ]);
+      
+      if (!txRes.ok) throw new Error("Error al cargar transacciones");
+      const txData = await txRes.json();
+      setTransactions(txData);
+      
+      if (walletRes.ok) {
+        const walletData = await walletRes.json();
+        setWallet(walletData);
+      }
     } catch (err) {
-      toast.error("Error al cargar transacciones");
+      toast.error("Error al cargar datos");
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (id) loadTransactions();
+    if (id) loadData();
   }, [id]);
 
   const filteredTransactions = useMemo(() => {
@@ -111,15 +128,11 @@ export default function TransactionsPage() {
     return Array.from(cats).sort();
   }, [transactions]);
 
-  function formatCurrency(amount: number) {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  }
+  const currency = wallet?.currency || "PYG";
 
   return (
     <div className="p-4 pb-24 max-w-4xl mx-auto space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Movimientos</h1>
@@ -136,35 +149,37 @@ export default function TransactionsPage() {
         </Button>
       </div>
 
+      {/* Stats cards con texto auto-ajustable */}
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-full">
-              <TrendingUp className="h-4 w-4 text-green-600" />
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full shrink-0">
+              <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground">Ingresos</p>
-              <p className="text-lg font-bold text-green-600">
-                +{formatCurrency(stats.income)}
+              <p className="text-base sm:text-lg font-bold text-green-600 dark:text-green-400 truncate">
+                +{formatCurrency(stats.income, currency)}
               </p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-full">
-              <TrendingDown className="h-4 w-4 text-red-600" />
+            <div className="p-2 bg-red-100 dark:bg-red-900 rounded-full shrink-0">
+              <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground">Gastos</p>
-              <p className="text-lg font-bold text-red-600">
-                -{formatCurrency(stats.expense)}
+              <p className="text-base sm:text-lg font-bold text-red-600 dark:text-red-400 truncate">
+                -{formatCurrency(stats.expense, currency)}
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Filtros */}
       <Card>
         <CardContent className="p-4 space-y-4">
           <div className="relative">
@@ -243,6 +258,7 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
+      {/* Lista de transacciones */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
@@ -262,7 +278,7 @@ export default function TransactionsPage() {
                   className="flex items-start justify-between p-3 rounded-lg border"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium">
+                    <p className="font-medium truncate">
                       {t.title || t.description || "Sin titulo"}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -271,9 +287,11 @@ export default function TransactionsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
-                    <p className={`text-lg font-bold ${t.type === "INCOME" ? "text-green-600" : "text-red-600"}`}>
+                    <p className={`text-base sm:text-lg font-bold whitespace-nowrap ${
+                      t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                    }`}>
                       {t.type === "INCOME" ? "+" : "-"}
-                      {formatCurrency(parseFloat(t.amount))}
+                      {formatCurrency(parseFloat(t.amount), currency)}
                     </p>
                     <Button
                       variant="ghost"
@@ -301,7 +319,8 @@ export default function TransactionsPage() {
             setShowForm(false);
             setEditingTransaction(null);
           }}
-          onSuccess={loadTransactions}
+          onSuccess={loadData}
+          currency={currency}
         />
       )}
     </div>

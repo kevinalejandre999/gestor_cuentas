@@ -16,6 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { formatCurrency } from "@/lib/currency";
 
 type Period = "this-month" | "last-month" | "last-3-months";
 
@@ -35,13 +36,6 @@ interface Wallet {
   name: string;
   currency: string;
   balance: number;
-}
-
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency,
-  }).format(amount);
 }
 
 function getPeriodDates(period: Period) {

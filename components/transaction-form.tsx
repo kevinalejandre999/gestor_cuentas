@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { X } from "lucide-react";
+import { formatCurrency, formatNumberInput, parseFormattedNumber, CURRENCY_CONFIG } from "@/lib/currency";
 
 interface Category {
   id: string;
@@ -30,6 +31,7 @@ interface TransactionFormProps {
   transaction?: Transaction | null;
   onClose: () => void;
   onSuccess: () => void;
+  currency?: string;
 }
 
 // Categorias por defecto si el usuario no tiene ninguna
@@ -46,11 +48,13 @@ export default function TransactionForm({
   transaction,
   onClose,
   onSuccess,
+  currency = "PYG",
 }: TransactionFormProps) {
   const isEdit = !!transaction;
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [amount, setAmount] = useState("");
+  const [displayAmount, setDisplayAmount] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -83,11 +87,14 @@ export default function TransactionForm({
       setTitle(transaction.title || "");
       setType(transaction.type);
       setAmount(transaction.amount);
+      // Formatear el monto para mostrar
+      const numAmount = parseFloat(transaction.amount);
+      setDisplayAmount(formatNumberInput(Math.round(numAmount).toString(), currency));
       setDescription(transaction.description || "");
       setCategory(transaction.category || "");
       setDate(new Date(transaction.date).toISOString().split("T")[0]);
     }
-  }, [transaction]);
+  }, [transaction, currency]);
 
   useEffect(() => {
     if (!isEdit && categories.length > 0) {
@@ -99,6 +106,19 @@ export default function TransactionForm({
   const availableCategories = categories.length > 0 
     ? categories.map(c => c.name)
     : (type === "INCOME" ? defaultIncomeCategories : defaultExpenseCategories);
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const numericValue = value.replace(/[^0-9]/g, "");
+    
+    if (numericValue) {
+      setAmount(numericValue);
+      setDisplayAmount(formatNumberInput(numericValue, currency));
+    } else {
+      setAmount("");
+      setDisplayAmount("");
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -162,6 +182,8 @@ export default function TransactionForm({
     onClose();
   }
 
+  const currencyConfig = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.PYG;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
       <Card className="w-full max-w-sm max-h-[80vh] flex flex-col relative">
@@ -209,16 +231,24 @@ export default function TransactionForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tf-amount">Monto</Label>
+              <Label htmlFor="tf-amount">
+                Monto {currencyConfig.isPrefix ? `(${currencyConfig.symbol})` : `(Gs.)`}
+              </Label>
               <Input
                 id="tf-amount"
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="numeric"
                 required
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
+                value={displayAmount}
+                onChange={handleAmountChange}
+                placeholder="0"
+                className="font-mono text-lg"
               />
+              {amount && (
+                <p className="text-sm text-muted-foreground">
+                  = {formatCurrency(Number(amount), currency)}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="tf-category">
