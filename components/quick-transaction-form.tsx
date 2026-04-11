@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateForAPI, toInputDateString } from "@/lib/date-utils";
 
 const expenseCategories = [
   "Comida",
@@ -30,7 +31,7 @@ export default function QuickTransactionForm({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(toInputDateString(new Date()));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -47,7 +48,7 @@ export default function QuickTransactionForm({
         amount: Number(amount),
         description,
         category: category || null,
-        date,
+        date: formatDateForAPI(date),
         walletId,
       }),
     });

@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import TransactionForm from "@/components/transaction-form";
 import { formatCurrency } from "@/lib/currency";
+import { formatDisplayDate } from "@/lib/date-utils";
 
 interface Transaction {
   id: string;
@@ -282,7 +283,7 @@ export default function TransactionsPage() {
                       {t.title || t.description || "Sin titulo"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(t.date).toLocaleDateString("es-ES")}
+                      {formatDisplayDate(t.date)}
                       {t.category ? ` · ${t.category}` : ""}
                     </p>
                   </div>

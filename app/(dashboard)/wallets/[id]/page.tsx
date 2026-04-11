@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { formatCurrency } from "@/lib/currency";
+import { formatDisplayDate } from "@/lib/date-utils";
 
 type Period = "this-month" | "last-month" | "last-3-months";
 
@@ -340,7 +341,7 @@ export default function WalletPage({
                         {t.title || t.description || "Sin descripcion"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(t.date).toLocaleDateString("es-ES")} {" "}
+                        {formatDisplayDate(t.date)} {" "}
                         {t.user.name} {t.user.lastName}
                       </p>
                     </div>

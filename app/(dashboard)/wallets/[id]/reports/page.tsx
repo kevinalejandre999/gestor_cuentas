@@ -20,6 +20,7 @@ import {
   Legend,
 } from "recharts";
 import { formatCurrency } from "@/lib/currency";
+import { formatDisplayDate } from "@/lib/date-utils";
 
 const COLORS = [
   "hsl(var(--primary))",
@@ -331,7 +332,7 @@ export default function WalletReportsPage() {
                           {t.title || t.description || "Sin descripcion"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(t.date).toLocaleDateString("es-ES")}
+                          {formatDisplayDate(t.date)}
                           {t.category ? ` - ${t.category}` : ""}
                         </p>
                       </div>

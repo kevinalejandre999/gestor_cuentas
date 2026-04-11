@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { formatCurrency, formatNumberInput, parseFormattedNumber, CURRENCY_CONFIG } from "@/lib/currency";
+import { formatDateForAPI, toInputDateString } from "@/lib/date-utils";
 
 interface Category {
   id: string;
@@ -57,7 +58,7 @@ export default function TransactionForm({
   const [displayAmount, setDisplayAmount] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(toInputDateString(new Date()));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
@@ -92,7 +93,7 @@ export default function TransactionForm({
       setDisplayAmount(formatNumberInput(Math.round(numAmount).toString(), currency));
       setDescription(transaction.description || "");
       setCategory(transaction.category || "");
-      setDate(new Date(transaction.date).toISOString().split("T")[0]);
+      setDate(toInputDateString(transaction.date));
     }
   }, [transaction, currency]);
 
@@ -131,7 +132,7 @@ export default function TransactionForm({
       title: title || null,
       description: description || null,
       category: category || null,
-      date,
+      date: formatDateForAPI(date),
       walletId,
     };
 
