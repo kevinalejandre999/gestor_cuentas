@@ -196,8 +196,8 @@ export default function RecurringPage() {
       </Button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-md max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-md max-h-[80vh] flex flex-col relative">
             <CardHeader className="flex flex-row items-center justify-between pb-2 shrink-0">
               <CardTitle className="text-lg">Nueva cuota fija</CardTitle>
               <Button
@@ -209,8 +209,8 @@ export default function RecurringPage() {
                 <X className="h-4 w-4" />
               </Button>
             </CardHeader>
-            <CardContent className="overflow-y-auto pb-20">
-              <form className="space-y-4">
+            <CardContent className="overflow-y-auto pb-32">
+              <form id="recurring-form" onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label className="block mb-2">Tipo</Label>
                   <div className="flex gap-2">
@@ -295,7 +295,7 @@ export default function RecurringPage() {
               </form>
             </CardContent>
             {/* Botones fijos en la parte inferior */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t rounded-b-lg">
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t rounded-b-lg z-10">
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -306,9 +306,10 @@ export default function RecurringPage() {
                   Cancelar
                 </Button>
                 <Button 
+                  type="submit"
+                  form="recurring-form"
                   className="flex-1" 
                   disabled={submitting}
-                  onClick={handleSubmit}
                 >
                   {submitting ? "Creando..." : "Crear"}
                 </Button>
