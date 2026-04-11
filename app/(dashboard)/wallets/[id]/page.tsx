@@ -19,7 +19,7 @@ import {
 import { formatCurrency } from "@/lib/currency";
 import { formatDisplayDate, getPeriodDates, normalizeTransactionDate } from "@/lib/date-utils";
 
-type Period = "this-month" | "last-month" | "last-3-months";
+type Period = "this-month" | "last-month" | "last-3-months" | "all";
 
 interface Transaction {
   id: string;
