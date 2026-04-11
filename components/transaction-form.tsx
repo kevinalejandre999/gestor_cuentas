@@ -8,21 +8,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const expenseCategories = [
-  "Comida",
-  "Transporte",
+  "Alimentacion",
+  "Transporte", 
   "Hogar",
   "Salud",
   "Entretenimiento",
   "Trabajo",
+  "Educacion",
+  "Ropa",
+  "Servicios",
+  "Mascotas",
+  "Regalos",
+  "Ahorro",
   "Otros",
 ];
 
-const incomeCategories = ["Sueldo", "Freelance", "Inversiones", "Otros"];
+const incomeCategories = [
+  "Sueldo",
+  "Freelance",
+  "Inversiones",
+  "Regalo",
+  "Reembolso",
+  "Venta",
+  "Otros",
+];
 
 interface Transaction {
   id: string;
   type: "INCOME" | "EXPENSE";
   amount: string;
+  title: string | null;
   description: string | null;
   category: string | null;
   date: string;
@@ -42,6 +57,7 @@ export default function TransactionForm({
   onSuccess,
 }: TransactionFormProps) {
   const isEdit = !!transaction;
+  const [title, setTitle] = useState("");
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -52,6 +68,7 @@ export default function TransactionForm({
 
   useEffect(() => {
     if (transaction) {
+      setTitle(transaction.title || "");
       setType(transaction.type);
       setAmount(transaction.amount);
       setDescription(transaction.description || "");
@@ -59,6 +76,16 @@ export default function TransactionForm({
       setDate(new Date(transaction.date).toISOString().split("T")[0]);
     }
   }, [transaction]);
+
+  useEffect(() => {
+    if (!isEdit) {
+      if (type === "INCOME") {
+        setCategory("Sueldo");
+      } else {
+        setCategory("Alimentacion");
+      }
+    }
+  }, [type, isEdit]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,6 +95,7 @@ export default function TransactionForm({
     const payload = {
       type,
       amount: Number(amount),
+      title: title || null,
       description: description || null,
       category: category || null,
       date,
@@ -94,14 +122,14 @@ export default function TransactionForm({
       return;
     }
 
-    toast.success(isEdit ? "Transacción actualizada" : "Transacción creada");
+    toast.success(isEdit ? "Transaccion actualizada" : "Transaccion creada");
     onSuccess();
     onClose();
   }
 
   async function handleDelete() {
     if (!transaction) return;
-    if (!confirm("¿Estás seguro de eliminar esta transacción?")) return;
+    if (!confirm("Estas seguro de eliminar esta transaccion?")) return;
 
     setLoading(true);
     const res = await fetch(`/api/transactions/${transaction.id}`, {
@@ -116,7 +144,7 @@ export default function TransactionForm({
       return;
     }
 
-    toast.success("Transacción eliminada");
+    toast.success("Transaccion eliminada");
     onSuccess();
     onClose();
   }
@@ -124,11 +152,11 @@ export default function TransactionForm({
   const categories = type === "INCOME" ? incomeCategories : expenseCategories;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-lg">
-            {isEdit ? "Editar transacción" : "Nueva transacción"}
+            {isEdit ? "Editar transaccion" : "Nueva transaccion"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -152,6 +180,15 @@ export default function TransactionForm({
               </Button>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="tf-title">Titulo</Label>
+              <Input
+                id="tf-title"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="tf-amount">Monto</Label>
               <Input
                 id="tf-amount"
@@ -163,14 +200,13 @@ export default function TransactionForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tf-category">Categoría</Label>
+              <Label htmlFor="tf-category">Categoria</Label>
               <select
                 id="tf-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="">Selecciona...</option>
                 {categories.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -179,7 +215,7 @@ export default function TransactionForm({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tf-desc">Descripción</Label>
+              <Label htmlFor="tf-desc">Descripcion</Label>
               <Input
                 id="tf-desc"
                 value={description}

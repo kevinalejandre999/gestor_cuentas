@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wallet, User } from "lucide-react";
+import { Home, Wallet, PieChart, Repeat, List } from "lucide-react";
 import { useWalletStore } from "@/lib/store";
 
 export default function BottomNav() {
@@ -10,11 +10,16 @@ export default function BottomNav() {
   const { lastWalletId } = useWalletStore();
 
   const walletHref = lastWalletId ? `/wallets/${lastWalletId}` : "/dashboard";
+  const recurringHref = lastWalletId ? `/wallets/${lastWalletId}/recurring` : "/dashboard";
+  const reportsHref = lastWalletId ? `/wallets/${lastWalletId}/reports` : "/dashboard";
+  const transactionsHref = lastWalletId ? `/wallets/${lastWalletId}/transactions` : "/dashboard";
 
   const items = [
     { href: "/dashboard", label: "Inicio", icon: Home },
     { href: walletHref, label: "Cartera", icon: Wallet },
-    { href: "/settings", label: "Perfil", icon: User },
+    { href: transactionsHref, label: "Movimientos", icon: List },
+    { href: recurringHref, label: "Fijos", icon: Repeat },
+    { href: reportsHref, label: "Informes", icon: PieChart },
   ];
 
   return (
@@ -32,7 +37,7 @@ export default function BottomNav() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <item.icon className="h-6 w-6" />
+              <item.icon className="h-5 w-5" />
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );

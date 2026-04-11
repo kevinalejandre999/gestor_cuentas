@@ -70,9 +70,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { type, amount, description, category, date, walletId } = body;
+    const { title, type, amount, description, category, date, walletId } = body;
 
-    if (!walletId || !type || amount === undefined || amount === null) {
+    if (!walletId || !type || amount === undefined || amount === null || !title) {
       return NextResponse.json(
         { error: "Faltan campos obligatorios" },
         { status: 400 }
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     if (!["INCOME", "EXPENSE"].includes(type)) {
       return NextResponse.json(
-        { error: "Tipo de transacción inválido" },
+        { error: "Tipo de transaccion invalido" },
         { status: 400 }
       );
     }
@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
     const transaction = await prisma.$transaction(async (tx) => {
       const created = await tx.transaction.create({
         data: {
+          title,
           type,
           amount: Number(amount),
           description: description || null,
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("POST transaction error:", error);
     return NextResponse.json(
-      { error: "Error al crear la transacción" },
+      { error: "Error al crear la transaccion" },
       { status: 500 }
     );
   }

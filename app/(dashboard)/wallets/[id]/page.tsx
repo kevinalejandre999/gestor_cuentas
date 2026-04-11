@@ -5,7 +5,8 @@ import { useWalletStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TransactionForm from "@/components/transaction-form";
 import WalletMembersModal from "@/components/wallet-members-modal";
-import { Users } from "lucide-react";
+import { Users, TrendingUp, TrendingDown, Plus } from "lucide-react";
+import Link from "next/link";
 import {
   LineChart,
   Line,
@@ -20,6 +21,7 @@ type Period = "this-month" | "last-month" | "last-3-months";
 
 interface Transaction {
   id: string;
+  title: string | null;
   type: "INCOME" | "EXPENSE";
   amount: string;
   description: string | null;
@@ -163,7 +165,7 @@ export default function WalletPage({
     return data;
   }, [filteredTransactions, wallet, from]);
 
-  const last10 = filteredTransactions.slice(0, 10);
+  const last5 = filteredTransactions.slice(0, 5);
 
   return (
     <div className="p-4 pb-24 max-w-md mx-auto space-y-6">
@@ -171,13 +173,12 @@ export default function WalletPage({
 
       {wallet && (
         <>
-          <div className="text-center space-y-1">
+          <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2">
               <p className="text-sm text-muted-foreground">{wallet.name}</p>
               <button
                 onClick={() => setShowMembers(true)}
                 className="text-muted-foreground hover:text-primary"
-                aria-label="Gestionar miembros"
               >
                 <Users className="h-4 w-4" />
               </button>
@@ -215,7 +216,8 @@ export default function WalletPage({
           <div className="grid grid-cols-2 gap-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
                   Ingresos
                 </CardTitle>
               </CardHeader>
@@ -227,7 +229,8 @@ export default function WalletPage({
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4 text-red-600" />
                   Gastos
                 </CardTitle>
               </CardHeader>
@@ -241,7 +244,7 @@ export default function WalletPage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Evolución del saldo</CardTitle>
+              <CardTitle className="text-base">Evolucion del saldo</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-56 w-full">
@@ -278,26 +281,29 @@ export default function WalletPage({
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Últimas transacciones</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Ultimas transacciones</CardTitle>
+              <Link href={`/wallets/${wallet.id}/transactions`}>
+                <span className="text-sm text-primary hover:underline cursor-pointer">Ver todas</span>
+              </Link>
             </CardHeader>
             <CardContent className="space-y-3">
-              {last10.length === 0 ? (
+              {last5.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center">
-                  No hay transacciones en este período
+                  No hay transacciones en este periodo
                 </p>
               ) : (
-                last10.map((t) => (
+                last5.map((t) => (
                   <div
                     key={t.id}
                     className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
                   >
                     <div className="space-y-0.5 flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {t.description || t.category || "Sin descripción"}
+                        {t.title || t.description || "Sin descripcion"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(t.date).toLocaleDateString("es-ES")} ·{" "}
+                        {new Date(t.date).toLocaleDateString("es-ES")} {" "}
                         {t.user.name} {t.user.lastName}
                       </p>
                     </div>
@@ -331,22 +337,9 @@ export default function WalletPage({
               setEditingTransaction(null);
               setShowForm(true);
             }}
-            className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            aria-label="Añadir transacción"
+            className="fixed bottom-20 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
           >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+            <Plus className="h-6 w-6" />
           </button>
 
           {showForm && (

@@ -19,6 +19,7 @@ model User {
 
   wallets       WalletMember[]
   transactions  Transaction[]
+  recurring     RecurringTransaction[]
   ownedWallets  Wallet[]    @relation("WalletOwner")
 }
 
@@ -32,6 +33,7 @@ model Wallet {
   owner         User      @relation("WalletOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members       WalletMember[]
   transactions  Transaction[]
+  recurring     RecurringTransaction[]
   createdAt     DateTime  @default(now())
 }
 
@@ -50,6 +52,7 @@ model WalletMember {
 
 model Transaction {
   id          String   @id @default(cuid())
+  title       String?
   type        String
   amount      Decimal
   description String?
@@ -57,6 +60,23 @@ model Transaction {
   date        DateTime @default(now())
   walletId    String
   userId      String
+
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RecurringTransaction {
+  id          String   @id @default(cuid())
+  title       String
+  type        String
+  amount      Decimal
+  category    String?
+  description String?
+  dayOfMonth  Int
+  walletId    String
+  userId      String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
 
   wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
