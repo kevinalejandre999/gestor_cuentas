@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "GestorCuentas",
   description: "Gestion de cuentas y carteras compartidas",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
