@@ -20,7 +20,7 @@ import {
   Legend,
 } from "recharts";
 import { formatCurrency } from "@/lib/currency";
-import { formatDisplayDate } from "@/lib/date-utils";
+import { formatDisplayDate, getPeriodDates, normalizeTransactionDate } from "@/lib/date-utils";
 
 const COLORS = [
   "hsl(var(--primary))",
@@ -53,24 +53,6 @@ interface WalletData {
 
 function getMonthLabel(date: Date) {
   return date.toLocaleDateString("es-ES", { month: "short", year: "2-digit" });
-}
-
-function getPeriodFilter(period: Period) {
-  const now = new Date();
-  const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-  let from = new Date(2000, 0, 1);
-
-  if (period === "this-month") {
-    from = new Date(now.getFullYear(), now.getMonth(), 1);
-  } else if (period === "last-month") {
-    from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    to.setDate(0);
-    to.setHours(23, 59, 59);
-  } else if (period === "last-3-months") {
-    from = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-  }
-
-  return { from, to };
 }
 
 export default function WalletReportsPage() {
@@ -113,7 +95,7 @@ export default function WalletReportsPage() {
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter((t) => {
-        const d = new Date(t.date);
+        const d = normalizeTransactionDate(t.date);
         return d >= from && d <= to;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -157,7 +139,7 @@ export default function WalletReportsPage() {
     }
 
     transactions.forEach((t) => {
-      const d = new Date(t.date);
+      const d = normalizeTransactionDate(t.date);
       const label = getMonthLabel(d);
       const monthEntry = months.find((m) => m.label === label);
       if (monthEntry) {

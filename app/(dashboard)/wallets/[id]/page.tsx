@@ -17,7 +17,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { formatCurrency } from "@/lib/currency";
-import { formatDisplayDate } from "@/lib/date-utils";
+import { formatDisplayDate, getPeriodDates, normalizeTransactionDate } from "@/lib/date-utils";
 
 type Period = "this-month" | "last-month" | "last-3-months";
 
@@ -39,23 +39,7 @@ interface Wallet {
   balance: number;
 }
 
-function getPeriodDates(period: Period) {
-  const now = new Date();
-  const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-  let from = new Date();
 
-  if (period === "this-month") {
-    from = new Date(now.getFullYear(), now.getMonth(), 1);
-  } else if (period === "last-month") {
-    from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    to.setDate(0);
-    to.setHours(23, 59, 59);
-  } else if (period === "last-3-months") {
-    from = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-  }
-
-  return { from, to };
-}
 
 export default function WalletPage({
   params,
@@ -102,7 +86,7 @@ export default function WalletPage({
   const filteredTransactions = useMemo(() => {
     return transactions
       .filter((t) => {
-        const d = new Date(t.date);
+        const d = normalizeTransactionDate(t.date);
         return d >= from && d <= to;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -135,7 +119,7 @@ export default function WalletPage({
 
     const dateMap = new Map<string, number>();
     sorted.forEach((t) => {
-      const d = new Date(t.date).toLocaleDateString("es-ES", {
+      const d = normalizeTransactionDate(t.date).toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "2-digit",
       });
