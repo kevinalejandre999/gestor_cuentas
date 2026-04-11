@@ -24,7 +24,7 @@ export async function GET() {
           },
         },
         _count: {
-          select: { transactions: true },
+          select: { transactions: true, members: true },
         },
       },
       orderBy: { createdAt: "desc" },

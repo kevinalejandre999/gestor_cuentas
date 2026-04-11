@@ -2,19 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wallet, PieChart, Repeat, List, Settings } from "lucide-react";
+import { Home, Wallet, Repeat, List, Settings } from "lucide-react";
 import { useWalletStore } from "@/lib/store";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { lastWalletId } = useWalletStore();
 
-  // Si no hay wallet seleccionada, redirigir a dashboard
   const walletId = lastWalletId || "0";
   
   const items = [
     { href: "/dashboard", label: "Inicio", icon: Home, id: "inicio" },
-    { href: `/wallets/${walletId}`, label: "Cartera", icon: Wallet, id: "cartera" },
+    { href: "/wallets", label: "Carteras", icon: Wallet, id: "carteras" },
     { href: `/wallets/${walletId}/transactions`, label: "Movimientos", icon: List, id: "movimientos" },
     { href: `/wallets/${walletId}/recurring`, label: "Fijos", icon: Repeat, id: "fijos" },
     { href: "/settings", label: "Ajustes", icon: Settings, id: "ajustes" },
@@ -26,7 +25,7 @@ export default function BottomNav() {
         {items.map((item) => {
           const isActive = pathname === item.href || 
                           pathname.startsWith(item.href + "/") ||
-                          (item.id === "cartera" && pathname.includes("/wallets/") && !pathname.includes("/transactions") && !pathname.includes("/recurring") && !pathname.includes("/reports")) ||
+                          (item.id === "carteras" && (pathname === "/wallets" || pathname.startsWith("/wallets/"))) ||
                           (item.id === "movimientos" && pathname.includes("/transactions")) ||
                           (item.id === "fijos" && pathname.includes("/recurring"));
           
