@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { X } from "lucide-react";
 
 interface Category {
   id: string;
@@ -162,14 +163,22 @@ export default function TransactionForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <Card className="w-full max-w-sm max-h-[85vh] flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 shrink-0">
           <CardTitle className="text-lg">
             {isEdit ? "Editar transaccion" : "Nueva transaccion"}
           </CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-y-auto pb-20">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex gap-2">
               <Button
@@ -255,33 +264,41 @@ export default function TransactionForm({
             {error && (
               <p className="text-sm text-red-500 text-center">{error}</p>
             )}
-            <div className="flex gap-2">
-              {isEdit && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="flex-1"
-                  onClick={handleDelete}
-                  disabled={loading}
-                >
-                  Eliminar
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={onClose}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" className="flex-1" disabled={loading}>
-                {loading ? "Guardando..." : isEdit ? "Guardar" : "Crear"}
-              </Button>
-            </div>
           </form>
         </CardContent>
+        {/* Botones fijos en la parte inferior */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t rounded-b-lg">
+          <div className="flex gap-2">
+            {isEdit && (
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1"
+                onClick={handleDelete}
+                disabled={loading}
+              >
+                Eliminar
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              className="flex-1" 
+              disabled={loading}
+              onClick={handleSubmit}
+            >
+              {loading ? "Guardando..." : isEdit ? "Guardar" : "Crear"}
+            </Button>
+          </div>
+        </div>
       </Card>
     </div>
   );
