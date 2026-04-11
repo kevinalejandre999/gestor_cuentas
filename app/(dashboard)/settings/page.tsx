@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { signOut } from "next-auth/react";
 import { LogOut, Mail, Phone, User, Plus, Trash2, Tag, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
+import { useThemeStore } from "@/lib/theme-store";
 
 interface Category {
   id: string;
@@ -20,7 +20,7 @@ interface Category {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useThemeStore();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
