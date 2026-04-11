@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useWalletStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TransactionForm from "@/components/transaction-form";
+import WalletMembersModal from "@/components/wallet-members-modal";
+import { Users } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -69,6 +71,7 @@ export default function WalletPage({
   const [period, setPeriod] = useState<Period>("this-month");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
@@ -169,7 +172,16 @@ export default function WalletPage({
       {wallet && (
         <>
           <div className="text-center space-y-1">
-            <p className="text-sm text-muted-foreground">{wallet.name}</p>
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-sm text-muted-foreground">{wallet.name}</p>
+              <button
+                onClick={() => setShowMembers(true)}
+                className="text-muted-foreground hover:text-primary"
+                aria-label="Gestionar miembros"
+              >
+                <Users className="h-4 w-4" />
+              </button>
+            </div>
             <h1 className="text-4xl font-bold">
               {formatCurrency(wallet.balance, wallet.currency)}
             </h1>
@@ -346,6 +358,13 @@ export default function WalletPage({
                 setEditingTransaction(null);
               }}
               onSuccess={loadData}
+            />
+          )}
+
+          {showMembers && (
+            <WalletMembersModal
+              walletId={wallet.id}
+              onClose={() => setShowMembers(false)}
             />
           )}
         </>
