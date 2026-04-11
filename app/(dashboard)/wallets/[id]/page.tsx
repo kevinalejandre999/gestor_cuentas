@@ -5,7 +5,7 @@ import { useWalletStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TransactionForm from "@/components/transaction-form";
 import WalletMembersModal from "@/components/wallet-members-modal";
-import { Users, TrendingUp, TrendingDown, Plus, List, Repeat, PieChart, Tag } from "lucide-react";
+import { Users, TrendingUp, TrendingDown, Plus, List, Repeat, PieChart, Tag, Edit2, X, Check } from "lucide-react";
 import Link from "next/link";
 import {
   LineChart,
@@ -18,6 +18,9 @@ import {
 } from "recharts";
 import { formatCurrency } from "@/lib/currency";
 import { formatDisplayDate, getPeriodDates, normalizeTransactionDate } from "@/lib/date-utils";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 type Period = "this-month" | "last-month" | "last-3-months" | "all";
 
@@ -53,6 +56,9 @@ export default function WalletPage({
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [updatingName, setUpdatingName] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
@@ -81,6 +87,29 @@ export default function WalletPage({
     loadData();
   }, [params.id]);
 
+  async function handleUpdateName() {
+    if (!wallet || !newName.trim()) return;
+    
+    setUpdatingName(true);
+    try {
+      const res = await fetch(`/api/wallets/${wallet.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+      
+      if (!res.ok) throw new Error("Error al actualizar");
+      
+      setWallet({ ...wallet, name: newName.trim() });
+      setEditingName(false);
+      toast.success("Nombre actualizado");
+    } catch {
+      toast.error("Error al actualizar nombre");
+    } finally {
+      setUpdatingName(false);
+    }
+  }
+
   const { from, to } = useMemo(() => getPeriodDates(period), [period]);
 
   const filteredTransactions = useMemo(() => {
@@ -106,29 +135,42 @@ export default function WalletPage({
   const chartData = useMemo(() => {
     if (!wallet) return [];
 
+    // Ordenar transacciones por fecha (más antigua primero)
     const sorted = [...filteredTransactions].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      (a, b) => normalizeTransactionDate(a.date).getTime() - normalizeTransactionDate(b.date).getTime()
     );
 
+    // Calcular saldo inicial (antes del período seleccionado)
+    // El saldo actual menos el cambio del período nos da el saldo inicial
     const periodChange = sorted.reduce((acc, t) => {
-      return acc + (t.type === "INCOME" ? -parseFloat(t.amount) : parseFloat(t.amount));
+      return acc + (t.type === "INCOME" ? parseFloat(t.amount) : -parseFloat(t.amount));
     }, 0);
-
-    let runningBalance = wallet.balance + periodChange;
+    
+    let runningBalance = wallet.balance - periodChange;
     const data: { date: string; balance: number }[] = [];
 
-    const dateMap = new Map<string, number>();
+    // Agrupar transacciones por fecha
+    const dateGroups: { [key: string]: number } = {};
     sorted.forEach((t) => {
       const d = normalizeTransactionDate(t.date).toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "2-digit",
       });
       const change = t.type === "INCOME" ? parseFloat(t.amount) : -parseFloat(t.amount);
-      dateMap.set(d, (dateMap.get(d) || 0) + change);
+      dateGroups[d] = (dateGroups[d] || 0) + change;
     });
 
-    dateMap.forEach((change, dateLabel) => {
-      runningBalance += change;
+    // Crear array ordenado cronológicamente
+    const sortedDates = Object.keys(dateGroups).sort((a, b) => {
+      const [dayA, monthA] = a.split('/').map(Number);
+      const [dayB, monthB] = b.split('/').map(Number);
+      const dateA = new Date(2024, monthA - 1, dayA);
+      const dateB = new Date(2024, monthB - 1, dayB);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    sortedDates.forEach((dateLabel) => {
+      runningBalance += dateGroups[dateLabel];
       data.push({ date: dateLabel, balance: runningBalance });
     });
 
@@ -147,20 +189,69 @@ export default function WalletPage({
   const last5 = filteredTransactions.slice(0, 5);
 
   return (
-    <div className="p-4 pb-24 max-w-md mx-auto space-y-6">
+    <div className="p-4 pb-24 max-w-md mx-auto space-y-6 w-full overflow-hidden">
       {loading && <p className="text-center text-muted-foreground">Cargando...</p>}
 
       {wallet && (
         <>
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2">
-              <p className="text-sm text-muted-foreground">{wallet.name}</p>
-              <button
-                onClick={() => setShowMembers(true)}
-                className="text-muted-foreground hover:text-primary"
-              >
-                <Users className="h-4 w-4" />
-              </button>
+              {editingName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="h-8 w-40 text-center"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleUpdateName();
+                      if (e.key === "Escape") {
+                        setEditingName(false);
+                        setNewName(wallet.name);
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleUpdateName}
+                    disabled={updatingName || !newName.trim()}
+                  >
+                    <Check className="h-4 w-4 text-green-500" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      setEditingName(false);
+                      setNewName(wallet.name);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">{wallet.name}</p>
+                  <button
+                    onClick={() => {
+                      setNewName(wallet.name);
+                      setEditingName(true);
+                    }}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={() => setShowMembers(true)}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <Users className="h-4 w-4" />
+                  </button>
+                </>
+              )}
             </div>
             <h1 className="text-4xl font-bold">
               {formatCurrency(wallet.balance, wallet.currency)}
@@ -227,37 +318,37 @@ export default function WalletPage({
               <CardTitle className="text-base">Accesos rapidos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-4 gap-2">
-                <Link href={`/wallets/${wallet.id}/transactions`}>
-                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <List className="h-5 w-5 text-primary" />
+              <div className="grid grid-cols-4 gap-1 sm:gap-2">
+                <Link href={`/wallets/${wallet.id}/transactions`} className="min-w-0">
+                  <div className="flex flex-col items-center gap-1 p-1 sm:p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                    <div className="p-1.5 sm:p-2 bg-primary/10 rounded-full shrink-0">
+                      <List className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
-                    <span className="text-xs text-center">Movimientos</span>
+                    <span className="text-[10px] sm:text-xs text-center truncate w-full">Movim.</span>
                   </div>
                 </Link>
-                <Link href={`/wallets/${wallet.id}/recurring`}>
-                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <Repeat className="h-5 w-5 text-primary" />
+                <Link href={`/wallets/${wallet.id}/recurring`} className="min-w-0">
+                  <div className="flex flex-col items-center gap-1 p-1 sm:p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                    <div className="p-1.5 sm:p-2 bg-primary/10 rounded-full shrink-0">
+                      <Repeat className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
-                    <span className="text-xs text-center">Fijos</span>
+                    <span className="text-[10px] sm:text-xs text-center truncate w-full">Fijos</span>
                   </div>
                 </Link>
-                <Link href={`/wallets/${wallet.id}/reports`}>
-                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <PieChart className="h-5 w-5 text-primary" />
+                <Link href={`/wallets/${wallet.id}/reports`} className="min-w-0">
+                  <div className="flex flex-col items-center gap-1 p-1 sm:p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                    <div className="p-1.5 sm:p-2 bg-primary/10 rounded-full shrink-0">
+                      <PieChart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
-                    <span className="text-xs text-center">Informes</span>
+                    <span className="text-[10px] sm:text-xs text-center truncate w-full">Informes</span>
                   </div>
                 </Link>
-                <Link href="/settings">
-                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <Tag className="h-5 w-5 text-primary" />
+                <Link href="/settings" className="min-w-0">
+                  <div className="flex flex-col items-center gap-1 p-1 sm:p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                    <div className="p-1.5 sm:p-2 bg-primary/10 rounded-full shrink-0">
+                      <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
-                    <span className="text-xs text-center">Categorias</span>
+                    <span className="text-[10px] sm:text-xs text-center truncate w-full">Categ.</span>
                   </div>
                 </Link>
               </div>
