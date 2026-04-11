@@ -25,10 +25,14 @@ RUN npm run build
 # STAGE 3: runner
 ###################
 FROM node:20-alpine AS runner
-RUN apk add --no-cache curl openssl
+RUN apk add --no-cache curl openssl tzdata
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Configurar zona horaria de Paraguay (UTC-3)
+ENV TZ=America/Asuncion
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
