@@ -23,11 +23,21 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden">
       <div className="mx-auto flex max-w-lg justify-around px-2">
         {items.map((item) => {
-          const isActive = pathname === item.href || 
-                          pathname.startsWith(item.href + "/") ||
-                          (item.id === "carteras" && (pathname === "/wallets" || pathname.startsWith("/wallets/"))) ||
-                          (item.id === "movimientos" && pathname.includes("/transactions")) ||
-                          (item.id === "fijos" && pathname.includes("/recurring"));
+          // Lógica de activación más específica
+          let isActive = false;
+          
+          if (item.id === "inicio") {
+            isActive = pathname === "/dashboard";
+          } else if (item.id === "carteras") {
+            // Solo activo en /wallets exacto, no en subrutas
+            isActive = pathname === "/wallets";
+          } else if (item.id === "movimientos") {
+            isActive = pathname.includes("/transactions");
+          } else if (item.id === "fijos") {
+            isActive = pathname.includes("/recurring");
+          } else if (item.id === "ajustes") {
+            isActive = pathname === "/settings";
+          }
           
           return (
             <Link

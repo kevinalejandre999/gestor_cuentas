@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency, formatNumberInput } from "@/lib/currency";
+
+type TabType = "pending" | "completed";
 
 interface Recurring {
   id: string;
@@ -42,10 +44,14 @@ export default function RecurringPage() {
   const params = useParams();
   const walletId = params.id as string;
 
-  const [items, setItems] = useState<Recurring[]>([]);
+  const [pending, setPending] = useState<Recurring[]>([]);
+  const [completed, setCompleted] = useState<Recurring[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>("pending");
+  const [currentMonth, setCurrentMonth] = useState(0);
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [title, setTitle] = useState("");
@@ -60,6 +66,11 @@ export default function RecurringPage() {
   
   const currency = wallet?.currency || "PYG";
 
+  const monthNames = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+
   const fetchRecurring = async () => {
     try {
       setLoading(true);
@@ -70,7 +81,9 @@ export default function RecurringPage() {
       
       if (!recurringRes.ok) throw new Error("Error al cargar");
       const data = await recurringRes.json();
-      setItems(data);
+      setPending(data.pending || []);
+      setCompleted(data.completed || []);
+      setCurrentMonth(data.currentMonth || new Date().getMonth() + 1);
       
       if (walletRes.ok) {
         const walletData = await walletRes.json();
@@ -123,6 +136,33 @@ export default function RecurringPage() {
     }
   };
 
+  const handleComplete = async (id: string) => {
+    if (!confirm("¿Marcar esta cuota como completada? Se registrará en los movimientos.")) return;
+    
+    setCompletingId(id);
+    try {
+      const res = await fetch("/api/recurring", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, walletId }),
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Error al completar");
+      }
+      
+      toast.success("Cuota completada y registrada en movimientos");
+      fetchRecurring();
+      // Cambiar a la pestaña de completadas
+      setActiveTab("completed");
+    } catch (err: any) {
+      toast.error(err.message || "Error al completar");
+    } finally {
+      setCompletingId(null);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Eliminar esta cuota fija?")) return;
     try {
@@ -133,7 +173,7 @@ export default function RecurringPage() {
       });
       if (!res.ok) throw new Error("Error al eliminar");
       toast.success("Cuota fija eliminada");
-      setItems((prev) => prev.filter((item) => item.id !== id));
+      fetchRecurring();
     } catch {
       toast.error("Error al eliminar");
     }
@@ -185,37 +225,101 @@ export default function RecurringPage() {
     ? categories.map(c => c.name)
     : (type === "INCOME" ? defaultIncomeCategories : defaultExpenseCategories);
 
+  const displayItems = activeTab === "pending" ? pending : completed;
+
   return (
     <div className="p-4 pb-24 pt-[env(safe-area-inset-top)]">
-      <h1 className="text-2xl font-bold mb-6">Cuotas fijas</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Cuotas fijas</h1>
+        <span className="text-sm text-muted-foreground">
+          {monthNames[currentMonth - 1]}
+        </span>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab("pending")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-colors ${
+            activeTab === "pending"
+              ? "bg-primary text-primary-foreground"
+              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          }`}
+        >
+          <Clock className="h-4 w-4" />
+          Pendientes ({pending.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("completed")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-colors ${
+            activeTab === "completed"
+              ? "bg-primary text-primary-foreground"
+              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          }`}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          Completadas ({completed.length})
+        </button>
+      </div>
 
       {loading ? (
         <p className="text-muted-foreground">Cargando...</p>
-      ) : items.length === 0 ? (
-        <p className="text-muted-foreground">No hay cuotas fijas.</p>
+      ) : displayItems.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">
+            {activeTab === "pending" 
+              ? "No hay cuotas pendientes para este mes." 
+              : "No hay cuotas completadas este mes."}
+          </p>
+        </div>
       ) : (
         <div className="space-y-4">
-          {items.map((item) => (
+          {displayItems.map((item) => (
             <Card key={item.id}>
-              <CardContent className="p-4 flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold truncate">{item.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {item.type === "INCOME" ? (
-                      <span className="text-green-600 font-medium">Ingreso</span>
-                    ) : (
-                      <span className="text-red-600 font-medium">Gasto</span>
-                    )}{" "}
-                    {formatAmountDisplay(item.amount)} - Dia {item.dayOfMonth}
-                  </p>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold truncate">{item.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {item.type === "INCOME" ? (
+                        <span className="text-green-600 font-medium">Ingreso</span>
+                      ) : (
+                        <span className="text-red-600 font-medium">Gasto</span>
+                      )}{" "}
+                      {formatAmountDisplay(item.amount)} - Dia {item.dayOfMonth}
+                    </p>
+                    {item.category && (
+                      <p className="text-xs text-muted-foreground">{item.category}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activeTab === "pending" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleComplete(item.id)}
+                        disabled={completingId === item.id}
+                        className="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                      >
+                        {completingId === item.id ? (
+                          "..."
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            Completar
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(item.id)}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
               </CardContent>
             </Card>
           ))}

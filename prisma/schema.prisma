@@ -80,7 +80,7 @@ model Transaction {
 }
 
 model RecurringTransaction {
-  id          String   @id @default(cuid())
+  id          String                   @id @default(cuid())
   title       String
   type        String
   amount      Decimal
@@ -89,9 +89,24 @@ model RecurringTransaction {
   dayOfMonth  Int
   walletId    String
   userId      String
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  active      Boolean                  @default(true)
+  createdAt   DateTime                 @default(now())
 
-  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet      Wallet                   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completions RecurringCompletion[]
+}
+
+model RecurringCompletion {
+  id          String               @id @default(cuid())
+  recurringId String
+  walletId    String
+  userId      String
+  completedAt DateTime             @default(now())
+  month       Int                  // Mes en que se completó (1-12)
+  year        Int                  // Año en que se completó
+
+  recurring   RecurringTransaction @relation(fields: [recurringId], references: [id], onDelete: Cascade)
+
+  @@unique([recurringId, month, year]) // Solo una vez por mes
 }

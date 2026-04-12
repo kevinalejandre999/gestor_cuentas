@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
 import CreateWalletModal from "@/components/create-wallet-modal";
+import { useWalletStore } from "@/lib/store";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { lastWalletId } = useWalletStore();
   const [loading, setLoading] = useState(true);
   const [hasWallets, setHasWallets] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -18,7 +20,14 @@ export default function DashboardPage() {
       .then((data) => {
         const wallets = Array.isArray(data) ? data : [];
         if (wallets.length > 0) {
-          router.replace(`/wallets/${wallets[0].id}`);
+          // Si hay una última cartera seleccionada y existe en la lista, usar esa
+          const lastWallet = lastWalletId && wallets.find((w: any) => w.id === lastWalletId);
+          if (lastWallet) {
+            router.replace(`/wallets/${lastWalletId}`);
+          } else {
+            // Si no, redirigir a la primera
+            router.replace(`/wallets/${wallets[0].id}`);
+          }
         } else {
           setHasWallets(false);
           setLoading(false);
@@ -28,7 +37,7 @@ export default function DashboardPage() {
         setHasWallets(false);
         setLoading(false);
       });
-  }, [router]);
+  }, [router, lastWalletId]);
 
   if (loading) {
     return (
