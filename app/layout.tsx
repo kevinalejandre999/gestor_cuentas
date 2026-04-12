@@ -22,9 +22,11 @@ export const metadata: Metadata = {
   title: "GestorCuentas",
   description: "Gestion de cuentas y carteras compartidas",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.png", sizes: "512x429", type: "image/png" },
+    ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180" },
+      { url: "/apple-touch-icon.png", sizes: "512x429", type: "image/png" },
     ],
   },
   manifest: "/manifest.json",
