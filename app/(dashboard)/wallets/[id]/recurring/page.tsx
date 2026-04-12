@@ -186,7 +186,7 @@ export default function RecurringPage() {
     : (type === "INCOME" ? defaultIncomeCategories : defaultExpenseCategories);
 
   return (
-    <div className="p-4 pb-24">
+    <div className="p-4 pb-24 pt-[env(safe-area-inset-top)]">
       <h1 className="text-2xl font-bold mb-6">Cuotas fijas</h1>
 
       {loading ? (

@@ -32,14 +32,14 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center p-8">
+      <div className="flex flex-1 items-center justify-center p-8 pt-[env(safe-area-inset-top)]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center p-8 gap-6">
+    <div className="flex flex-1 flex-col items-center justify-center p-8 pt-[env(safe-area-inset-top)] gap-6">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold">Bienvenido</h1>
         <p className="text-muted-foreground">

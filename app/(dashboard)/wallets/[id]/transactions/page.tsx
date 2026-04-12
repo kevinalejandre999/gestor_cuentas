@@ -132,7 +132,7 @@ export default function TransactionsPage() {
   const currency = wallet?.currency || "PYG";
 
   return (
-    <div className="p-4 pb-24 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 pb-24 pt-[env(safe-area-inset-top)] max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

@@ -40,6 +40,7 @@ interface Wallet {
   name: string;
   currency: string;
   balance: number;
+  userRole?: string;
 }
 
 
@@ -189,7 +190,7 @@ export default function WalletPage({
   const last5 = filteredTransactions.slice(0, 5);
 
   return (
-    <div className="p-4 pb-24 max-w-md mx-auto space-y-6 w-full overflow-hidden">
+    <div className="p-4 pb-24 pt-[env(safe-area-inset-top)] max-w-md mx-auto space-y-6 w-full overflow-hidden">
       {loading && <p className="text-center text-muted-foreground">Cargando...</p>}
 
       {wallet && (
@@ -235,15 +236,17 @@ export default function WalletPage({
               ) : (
                 <>
                   <p className="text-sm text-muted-foreground">{wallet.name}</p>
-                  <button
-                    onClick={() => {
-                      setNewName(wallet.name);
-                      setEditingName(true);
-                    }}
-                    className="text-muted-foreground hover:text-primary"
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </button>
+                  {wallet.userRole === "owner" && (
+                    <button
+                      onClick={() => {
+                        setNewName(wallet.name);
+                        setEditingName(true);
+                      }}
+                      className="text-muted-foreground hover:text-primary"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowMembers(true)}
                     className="text-muted-foreground hover:text-primary"

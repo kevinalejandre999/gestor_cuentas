@@ -86,7 +86,7 @@ export default function WalletsPage() {
   }
 
   return (
-    <div className="p-4 pb-24 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 pb-24 pt-[env(safe-area-inset-top)] max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mis Carteras</h1>
         <Button onClick={() => setShowCreate(true)}>

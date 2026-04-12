@@ -127,7 +127,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-4 max-w-md mx-auto space-y-6 pb-24">
+    <div className="p-4 max-w-md mx-auto space-y-6 pb-24 pt-[env(safe-area-inset-top)]">
       <h1 className="text-2xl font-bold">Configuracion</h1>
 
       {/* Tema */}

@@ -160,7 +160,7 @@ export default function WalletReportsPage() {
   ];
 
   return (
-    <div className="p-4 pb-24 space-y-6">
+    <div className="p-4 pb-24 pt-[env(safe-area-inset-top)] space-y-6">
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <PieChartIcon className="h-6 w-6 text-primary" />

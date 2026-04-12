@@ -46,7 +46,11 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(wallet);
+    // Incluir el rol del usuario actual en la respuesta
+    return NextResponse.json({
+      ...wallet,
+      userRole: membership.role,
+    });
   } catch (error) {
     console.error("GET wallet error:", error);
     return NextResponse.json(
