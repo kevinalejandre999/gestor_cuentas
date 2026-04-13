@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { ThemeInit } from "@/components/theme-init";
+import { PWARegister } from "@/components/pwa-register";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -46,6 +47,7 @@ export default function RootLayout({
     <html lang="es" className="h-full antialiased">
       <body className={`${inter.className} min-h-full flex flex-col`}>
         <ThemeInit />
+        <PWARegister />
         <Providers>{children}</Providers>
       </body>
     </html>
